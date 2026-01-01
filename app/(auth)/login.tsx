@@ -1,25 +1,46 @@
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
-import { TertiaryButton } from '@/src/components/buttons/TertiaryButton';
-import { InputPassword } from '@/src/components/inputs/InputPassword';
-import { InputText } from '@/src/components/inputs/InputText';
-import { Label } from '@/src/components/labels/Label';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { login } from "@/src/api/auth.api";
+import { PrimaryButton } from "@/src/components/buttons/PrimaryButton";
+import { SecondaryButton } from "@/src/components/buttons/SecondaryButton";
+import { TertiaryButton } from "@/src/components/buttons/TertiaryButton";
+import { InputPassword } from "@/src/components/inputs/InputPassword";
+import { InputText } from "@/src/components/inputs/InputText";
+import { Label } from "@/src/components/labels/Label";
+import { saveToken } from "@/src/utils/tokenStorage";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const background = useThemeColor({}, 'background');
+  const background = useThemeColor({}, "background");
 
-  const handleLogin = () => {
-    console.log('Login pressed', { email, password });
+  const handleLogin = async () => {
+    try {
+      const response = await login({
+        email,
+        password,
+      });
+
+      await saveToken(response.token);
+
+      console.log("Login success");
+    } catch (error: any) {
+      console.error("Login failed", error.response?.data);
+    }
   };
+
+  const handleSignUp = async () => {
+    try{
+
+    } catch (error: any) {
+
+    }
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: background }]}>
-      {/* Form */}
       <View style={styles.form}>
         <Label text="Email" />
         <InputText
@@ -43,9 +64,13 @@ export default function LoginScreen() {
 
         <View style={styles.spacerSmall} />
 
+        <SecondaryButton title="Signup" onPress={handleSignUp}/>
+
+        <View style={styles.spacerSmall} />
+
         <TertiaryButton
           title="Forgot password?"
-          onPress={() => console.log('Forgot password')}
+          onPress={() => console.log("Forgot password")}
         />
       </View>
     </View>
@@ -55,7 +80,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 20,
   },
   form: {
@@ -65,7 +90,7 @@ const styles = StyleSheet.create({
     height: 12,
   },
   spacerLarge: {
-    height: 24,
+    height: 30,
   },
   spacerSmall: {
     height: 10,
