@@ -1,3 +1,3 @@
 export const API_CONFIG = {
-  BASE_URL: 'http://10.0.2.2:5021/api/v1',
+  BASE_URL: 'http://192.168.8.104:5021/api/v1',
 };

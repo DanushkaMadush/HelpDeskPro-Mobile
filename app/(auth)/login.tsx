@@ -18,26 +18,19 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await login({
-        email,
-        password,
-      });
-
+      const response = await login({ email, password, });
       await saveToken(response.token);
-
       console.log("Login success");
     } catch (error: any) {
-      console.error("Login failed", error.response?.data);
+      const message = error?.response?.data?.message || error?.message || "Login Failed";
+      console.error("Login failed", message);
     }
   };
 
   const handleSignUp = async () => {
-    try{
-
-    } catch (error: any) {
-
-    }
-  }
+    try {
+    } catch (error: any) {}
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: background }]}>
@@ -64,7 +57,7 @@ export default function LoginScreen() {
 
         <View style={styles.spacerSmall} />
 
-        <SecondaryButton title="Signup" onPress={handleSignUp}/>
+        <SecondaryButton title="Signup" onPress={handleSignUp} />
 
         <View style={styles.spacerSmall} />
 
