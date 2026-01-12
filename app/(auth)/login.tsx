@@ -7,8 +7,10 @@ import { InputPassword } from "@/src/components/inputs/InputPassword";
 import { InputText } from "@/src/components/inputs/InputText";
 import { Label } from "@/src/components/labels/Label";
 import { saveToken } from "@/src/utils/tokenStorage";
+import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -27,13 +29,12 @@ export default function LoginScreen() {
     }
   };
 
-  const handleSignUp = async () => {
-    try {
-    } catch (error: any) {}
+  const handleSignUp = () => {
+    router.push("/(auth)/signup");
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: background }]} edges={['top', 'left', 'right']}>
       <View style={styles.form}>
         <Label text="Email" />
         <InputText
@@ -66,7 +67,7 @@ export default function LoginScreen() {
           onPress={() => console.log("Forgot password")}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
