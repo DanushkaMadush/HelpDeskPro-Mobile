@@ -1,4 +1,7 @@
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { Branch, getBranches } from "@/src/api/branch.api";
+import { Department, getDepartments } from "@/src/api/department.api";
+import { getSystems, System } from "@/src/api/system.api";
 import {
   deleteTicket,
   getTicketById,
@@ -13,6 +16,7 @@ import { SecondaryButton } from "@/src/components/buttons/SecondaryButton";
 import { InputText } from "@/src/components/inputs/InputText";
 import { Label } from "@/src/components/labels/Label";
 import { getUserId } from "@/src/services/jwt.service";
+import { Picker } from "@react-native-picker/picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -38,13 +42,20 @@ export default function TicketDetailScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
 
+  // Dropdown data
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [systems, setSystems] = useState<System[]>([]);
+  const [listsLoading, setListsLoading] = useState(false);
+
+  // Selected values (numeric)
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [selectedSystemId, setSelectedSystemId] = useState<number | null>(null);
+
   // Edit form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [branchId, setBranchId] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
-  const [systemId, setSystemId] = useState("");
-  const [priorityId, setPriorityId] = useState("");
 
   const colorScheme = useColorScheme();
   const colors = colorScheme === "dark" ? Colors.dark : Colors.light;
@@ -69,13 +80,16 @@ export default function TicketDetailScreen() {
       // Initialize edit form
       setTitle(ticketData.title);
       setDescription(ticketData.description);
-      setBranchId(ticketData.branchId.toString());
-      setDepartmentId(ticketData.departmentId.toString());
-      setSystemId(ticketData.systemId.toString());
-      setPriorityId(ticketData.priorityId.toString());
+
+      // Set selected defaults
+      setSelectedBranchId(ticketData.branchId);
+      setSelectedDepartmentId(ticketData.departmentId);
+      setSelectedSystemId(ticketData.systemId);
+
+      // Load dropdown lists
+      await loadDropdownLists();
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message || "Failed to load ticket details";
+      const errorMessage = error?.response?.data?.message || "Failed to load ticket details";
       Alert.alert("Error", errorMessage);
       console.error("Error loading ticket details:", error);
       router.back();
@@ -84,24 +98,41 @@ export default function TicketDetailScreen() {
     }
   };
 
+  const loadDropdownLists = async () => {
+    try {
+      setListsLoading(true);
+      const [branchRes, deptRes, systemRes] = await Promise.all([
+        getBranches(),
+        getDepartments(),
+        getSystems(),
+      ]);
+      setBranches(branchRes || []);
+      setDepartments(deptRes || []);
+      setSystems(systemRes || []);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "Failed to load dropdown data";
+      Alert.alert("Error", msg);
+      console.error("Dropdown load error:", error);
+    } finally {
+      setListsLoading(false);
+    }
+  };
+
   const handleUpdate = async () => {
     if (!ticket) return;
 
-    // Validation
     if (!title.trim() || !description.trim()) {
       Alert.alert("Error", "Title and description are required");
       return;
     }
-
-    if (!branchId || !departmentId || !systemId || !priorityId) {
-      Alert.alert("Error", "All fields must be filled");
+    if (!selectedBranchId || !selectedDepartmentId || !selectedSystemId) {
+      Alert.alert("Error", "Please select branch, department, and system");
       return;
     }
 
     try {
       setUpdating(true);
       const userId = await getUserId();
-
       if (!userId) {
         Alert.alert("Error", "Unable to get user ID");
         return;
@@ -111,10 +142,10 @@ export default function TicketDetailScreen() {
         ticketId: ticket.ticketId,
         title: title.trim(),
         description: description.trim(),
-        branchId: Number(branchId),
-        departmentId: Number(departmentId),
-        systemId: Number(systemId),
-        priorityId: Number(priorityId),
+        branchId: selectedBranchId,
+        departmentId: selectedDepartmentId,
+        systemId: selectedSystemId,
+        priorityId: ticket.priorityId,
         updatedBy: userId,
       };
 
@@ -123,8 +154,7 @@ export default function TicketDetailScreen() {
       setIsEditing(false);
       Alert.alert("Success", "Ticket updated successfully");
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message || "Failed to update ticket";
+      const errorMessage = error?.response?.data?.message || "Failed to update ticket";
       Alert.alert("Error", errorMessage);
       console.error("Error updating ticket:", error);
     } finally {
@@ -221,10 +251,7 @@ export default function TicketDetailScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: background }]}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: background }]} edges={["top", "left", "right"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -264,58 +291,80 @@ export default function TicketDetailScreen() {
               />
               <View style={styles.spacer} />
 
-              <Label text="Branch ID" />
-              <InputText
-                value={branchId}
-                onChangeText={setBranchId}
-                placeholder="Enter branch ID"
-                // keyboardType="numeric"
-              />
+              {/* Branch Dropdown */}
+              <Label text="Branch" />
+              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Picker
+                  selectedValue={selectedBranchId ?? undefined}
+                  onValueChange={(value: number | string | undefined) => setSelectedBranchId(value ? Number(value) : null)}
+                  enabled={!listsLoading}
+                  style={{ color: textColor }}
+                >
+                  {branches.length === 0 ? (
+                    <Picker.Item label="No branches" value={undefined} />
+                  ) : (
+                    branches.map((b) => (
+                      <Picker.Item key={b.branchId} label={b.branchName} value={b.branchId} />
+                    ))
+                  )}
+                </Picker>
+              </View>
               <View style={styles.spacer} />
 
-              <Label text="Department ID" />
-              <InputText
-                value={departmentId}
-                onChangeText={setDepartmentId}
-                placeholder="Enter department ID"
-                // keyboardType="numeric"
-              />
+              {/* Department Dropdown */}
+              <Label text="Department" />
+              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Picker
+                  selectedValue={selectedDepartmentId ?? undefined}
+                  onValueChange={(value: number | string | undefined) => setSelectedDepartmentId(value ? Number(value) : null)}
+                  enabled={!listsLoading}
+                  style={{ color: textColor }}
+                >
+                  {departments.length === 0 ? (
+                    <Picker.Item label="No departments" value={undefined} />
+                  ) : (
+                    departments.map((d) => (
+                      <Picker.Item key={d.departmentId} label={d.departmentName} value={d.departmentId} />
+                    ))
+                  )}
+                </Picker>
+              </View>
               <View style={styles.spacer} />
 
-              <Label text="System ID" />
-              <InputText
-                value={systemId}
-                onChangeText={setSystemId}
-                placeholder="Enter system ID"
-                // keyboardType="numeric"
-              />
-              <View style={styles.spacer} />
+              {/* System Dropdown */}
+              <Label text="System" />
+              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Picker
+                  selectedValue={selectedSystemId ?? undefined}
+                  onValueChange={(value: number | string | undefined) => setSelectedSystemId(value ? Number(value) : null)}
+                  enabled={!listsLoading}
+                  style={{ color: textColor }}
+                >
+                  {systems.length === 0 ? (
+                    <Picker.Item label="No systems" value={undefined} />
+                  ) : (
+                    systems.map((s) => (
+                      <Picker.Item key={s.systemId} label={s.systemName} value={s.systemId} />
+                    ))
+                  )}
+                </Picker>
+              </View>
 
-              <Label text="Priority ID" />
-              <InputText
-                value={priorityId}
-                onChangeText={setPriorityId}
-                placeholder="Enter priority ID"
-                // keyboardType="numeric"
-              />
               <View style={styles.spacerLarge} />
 
-              <PrimaryButton
-                title={updating ? "Updating..." : "Save Changes"}
-                onPress={handleUpdate}
-              />
+              <PrimaryButton title={updating ? "Updating..." : "Save Changes"} onPress={handleUpdate} />
               <View style={styles.spacerSmall} />
               <SecondaryButton
                 title="Cancel"
                 onPress={() => {
                   setIsEditing(false);
-                  // Reset form
-                  setTitle(ticket.title);
-                  setDescription(ticket.description);
-                  setBranchId(ticket.branchId.toString());
-                  setDepartmentId(ticket.departmentId.toString());
-                  setSystemId(ticket.systemId.toString());
-                  setPriorityId(ticket.priorityId.toString());
+                  if (ticket) {
+                    setTitle(ticket.title);
+                    setDescription(ticket.description);
+                    setSelectedBranchId(ticket.branchId);
+                    setSelectedDepartmentId(ticket.departmentId);
+                    setSelectedSystemId(ticket.systemId);
+                  }
                 }}
               />
             </View>
@@ -579,5 +628,9 @@ const styles = StyleSheet.create({
   },
   spacerLarge: {
     height: 20,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
   },
 });
