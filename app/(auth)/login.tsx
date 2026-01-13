@@ -10,16 +10,23 @@ import { decodeToken } from "@/src/services/jwt.service";
 import { saveToken } from "@/src/utils/tokenStorage";
 import { router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const background = useThemeColor({}, "background");
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await login({ email, password });
       await saveToken(response.token);
@@ -33,8 +40,29 @@ export default function LoginScreen() {
         router.replace("/(tabs)/home-user");
       }
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || "Login Failed";
-      console.error("Login failed", message);
+      let errorMessage = "Login failed. Please try again.";
+
+      if (error.message === "Network Error" || !error.response) {
+        errorMessage = "Network error. Please check your internet connection.";
+      } 
+      else if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data?.message;
+
+        if (status === 401) {
+          errorMessage = "Invalid email or password.";
+        } else if (status === 400) {
+          errorMessage = message || "Invalid request. Please check your credentials.";
+        } else if (status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else if (message) {
+          errorMessage = message;
+        }
+      }
+
+      Alert.alert("Login Failed", errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,7 +91,10 @@ export default function LoginScreen() {
 
         <View style={styles.spacerLarge} />
 
-        <PrimaryButton title="Login" onPress={handleLogin} />
+        <PrimaryButton 
+          title={loading ? "Logging in..." : "Login"} 
+          onPress={handleLogin} 
+        />
 
         <View style={styles.spacerSmall} />
 
