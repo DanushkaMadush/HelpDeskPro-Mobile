@@ -33,10 +33,15 @@ export interface Ticket {
   title: string;
   description: string;
   branchId: number;
+  branchName?: string;
   departmentId: number;
+  departmentName?: string;
   systemId: number;
+  systemName?: string;
   statusId: number;
+  status?: string;
   priorityId: number;
+  priority?: string;
   createdBy: string;
   createdAt: string;
   updatedBy?: string;
