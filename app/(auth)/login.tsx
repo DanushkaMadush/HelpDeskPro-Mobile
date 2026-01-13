@@ -6,6 +6,7 @@ import { TertiaryButton } from "@/src/components/buttons/TertiaryButton";
 import { InputPassword } from "@/src/components/inputs/InputPassword";
 import { InputText } from "@/src/components/inputs/InputText";
 import { Label } from "@/src/components/labels/Label";
+import { decodeToken } from "@/src/services/jwt.service";
 import { saveToken } from "@/src/utils/tokenStorage";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -20,9 +21,17 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await login({ email, password, });
+      const response = await login({ email, password });
       await saveToken(response.token);
-      console.log("Login success");
+
+      const decoded = decodeToken(response.token);
+      const role = decoded?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]?.toLowerCase();
+
+      if (role === "developer") {
+        router.replace("/(tabs)/home-developer");
+      } else {
+        router.replace("/(tabs)/home-user");
+      }
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || "Login Failed";
       console.error("Login failed", message);
