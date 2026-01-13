@@ -2,6 +2,7 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { Ticket, getTicketsByUserId } from "@/src/api/ticket.api";
 import { Colors } from "@/src/colors/colors";
 import { getUserId } from "@/src/services/jwt.service";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -84,7 +85,7 @@ export default function MyTicketsScreen() {
   };
 
   const handleTicketPress = (ticketId: number) => {
-    // router.push(`/(tickets)/ticket-detail/${ticketId}`);
+    router.push(`/(tickets)/ticket-detail/${ticketId}` as any);
   };
 
   const renderTicketCard = ({ item }: { item: Ticket }) => (
