@@ -8,6 +8,10 @@ export const Colors = {
     text: '#111827',
     border: '#E5E7EB',
     error: '#EF4444',
+    statusOpen: '#FF6B6B',
+    statusInProgress: '#FFA500',
+    statusResolved: '#4CAF50',
+    statusClosed: '#808080',
   },
 
   dark: {
@@ -19,5 +23,9 @@ export const Colors = {
     text: '#F9FAFB',
     border: '#334155',
     error: '#F87171',
+    statusOpen: '#FF6B6B',
+    statusInProgress: '#FFA500',
+    statusResolved: '#4CAF50',
+    statusClosed: '#808080',
   },
 };
