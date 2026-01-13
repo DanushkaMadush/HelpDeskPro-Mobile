@@ -1,40 +1,99 @@
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { Colors } from "@/src/colors/colors";
+import { PrimaryButton } from "@/src/components/buttons/PrimaryButton";
+import { SecondaryButton } from "@/src/components/buttons/SecondaryButton";
 import { getUsername } from "@/src/services/jwt.service";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet, Text, View } from "react-native";
 
 export default function HomeUserScreen() {
   const [username, setUsername] = useState("Guest");
+  const colorScheme = useColorScheme();
+  const colors = colorScheme === "dark" ? Colors.dark : Colors.light;
+
   const background = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
 
   useEffect(() => {
-    (async () => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
       const name = await getUsername();
       setUsername(name || "Guest");
-    })();
-  }, []);
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+
+  const handleCreateTicket = () => {
+    // router.push("/(tickets)/create-ticket");
+  };
+
+  const handleViewTickets = () => {
+    router.push("/(tickets)/my-tickets");
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: background }]} edges={["top", "left", "right"]}>
-      <View style={styles.header}>
-        <Text style={[styles.greeting, { color: textColor }]}>Hello, {username}</Text>
-        <Text style={[styles.subtitle, { color: textColor, opacity: 0.7 }]}>
-          Welcome to HelpDeskPro (User)
-        </Text>
-      </View>
-      <View style={styles.content}>
-        <Text style={{ color: textColor, opacity: 0.8 }}>User dashboard content goes here.</Text>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Header Section */}
+        <View style={styles.header}>
+          <Text style={[styles.greeting, { color: textColor }]}>Hello, {username}!</Text>
+          <Text style={[styles.subtitle, { color: textColor }]}>
+            Welcome to HelpDeskPro
+          </Text>
+        </View>
+
+        {/* Action Buttons Container */}
+        <View style={styles.actionsContainer}>
+          <PrimaryButton 
+            title="+ Create Ticket" 
+            onPress={handleCreateTicket}
+          />
+          <View style={styles.buttonSpacer} />
+          <SecondaryButton 
+            title="View My All Tickets" 
+            onPress={handleViewTickets}
+          />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { padding: 20, paddingTop: 10 },
-  greeting: { fontSize: 28, fontWeight: "bold", marginBottom: 4 },
-  subtitle: { fontSize: 16 },
-  content: { flex: 1, padding: 20 },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  header: {
+    paddingHorizontal: 20,
+    marginBottom: 50,
+    alignItems: "center",
+  },
+  greeting: {
+    fontSize: 36,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 18,
+    textAlign: "center",
+    opacity: 0.7,
+  },
+  actionsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  buttonSpacer: {
+    height: 14,
+  },
 });
