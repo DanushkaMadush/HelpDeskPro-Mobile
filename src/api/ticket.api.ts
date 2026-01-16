@@ -11,6 +11,12 @@ export interface CreateTicketRequest {
   createdBy: string;
 }
 
+export interface CreateTicketResponse {
+  successMessage?: string;
+  errorMessage?: string;
+  ticket: Ticket;
+}
+
 export interface UpdateTicketRequest {
   ticketId: number;
   title: string;
@@ -65,9 +71,9 @@ export interface UploadMediaRequest {
 
 export const createTicket = async (
   payload: CreateTicketRequest
-): Promise<Ticket> => {
+): Promise<CreateTicketResponse> => {
   try {
-    const response = await apiClient.post<Ticket>("/tickets", payload);
+    const response = await apiClient.post<CreateTicketResponse>("/tickets", payload);
     return response.data;
   } catch (error: any) {
     console.error("Create ticket error:", error);
