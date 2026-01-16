@@ -13,10 +13,10 @@ import {
 import { Colors } from "@/src/colors/colors";
 import { PrimaryButton } from "@/src/components/buttons/PrimaryButton";
 import { SecondaryButton } from "@/src/components/buttons/SecondaryButton";
+import { DropDown, DropDownOption } from "@/src/components/inputs/DropDown";
 import { InputText } from "@/src/components/inputs/InputText";
 import { Label } from "@/src/components/labels/Label";
 import { getUserId } from "@/src/services/jwt.service";
-import { Picker } from "@react-native-picker/picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -286,69 +286,52 @@ export default function TicketDetailScreen() {
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Enter ticket description"
-                // multiline
-                // numberOfLines={4}
               />
               <View style={styles.spacer} />
 
-              {/* Branch Dropdown */}
-              <Label text="Branch" />
-              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                <Picker
-                  selectedValue={selectedBranchId ?? undefined}
-                  onValueChange={(value: number | string | undefined) => setSelectedBranchId(value ? Number(value) : null)}
-                  enabled={!listsLoading}
-                  style={{ color: textColor }}
-                >
-                  {branches.length === 0 ? (
-                    <Picker.Item label="No branches" value={undefined} />
-                  ) : (
-                    branches.map((b) => (
-                      <Picker.Item key={b.branchId} label={b.branchName} value={b.branchId} />
-                    ))
-                  )}
-                </Picker>
-              </View>
+              <DropDown
+                label="Branch"
+                options={branches.map(
+                  (b) => ({ label: b.branchName, value: b.branchId } as DropDownOption)
+                )}
+                value={selectedBranchId ?? undefined}
+                onSelect={(v) => setSelectedBranchId(v)}
+                placeholder="Select branch"
+                disabled={listsLoading}
+                textColor={textColor}
+                borderColor={colors.border}
+                cardColor={colors.card}
+              />
               <View style={styles.spacer} />
 
-              {/* Department Dropdown */}
-              <Label text="Department" />
-              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                <Picker
-                  selectedValue={selectedDepartmentId ?? undefined}
-                  onValueChange={(value: number | string | undefined) => setSelectedDepartmentId(value ? Number(value) : null)}
-                  enabled={!listsLoading}
-                  style={{ color: textColor }}
-                >
-                  {departments.length === 0 ? (
-                    <Picker.Item label="No departments" value={undefined} />
-                  ) : (
-                    departments.map((d) => (
-                      <Picker.Item key={d.departmentId} label={d.departmentName} value={d.departmentId} />
-                    ))
-                  )}
-                </Picker>
-              </View>
+              <DropDown
+                label="Department"
+                options={departments.map(
+                  (d) => ({ label: d.departmentName, value: d.departmentId } as DropDownOption)
+                )}
+                value={selectedDepartmentId ?? undefined}
+                onSelect={(v) => setSelectedDepartmentId(v)}
+                placeholder="Select department"
+                disabled={listsLoading}
+                textColor={textColor}
+                borderColor={colors.border}
+                cardColor={colors.card}
+              />
               <View style={styles.spacer} />
 
-              {/* System Dropdown */}
-              <Label text="System" />
-              <View style={[styles.pickerContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                <Picker
-                  selectedValue={selectedSystemId ?? undefined}
-                  onValueChange={(value: number | string | undefined) => setSelectedSystemId(value ? Number(value) : null)}
-                  enabled={!listsLoading}
-                  style={{ color: textColor }}
-                >
-                  {systems.length === 0 ? (
-                    <Picker.Item label="No systems" value={undefined} />
-                  ) : (
-                    systems.map((s) => (
-                      <Picker.Item key={s.systemId} label={s.systemName} value={s.systemId} />
-                    ))
-                  )}
-                </Picker>
-              </View>
+              <DropDown
+                label="System"
+                options={systems.map(
+                  (s) => ({ label: s.systemName, value: s.systemId } as DropDownOption)
+                )}
+                value={selectedSystemId ?? undefined}
+                onSelect={(v) => setSelectedSystemId(v)}
+                placeholder="Select system"
+                disabled={listsLoading}
+                textColor={textColor}
+                borderColor={colors.border}
+                cardColor={colors.card}
+              />
 
               <View style={styles.spacerLarge} />
 
