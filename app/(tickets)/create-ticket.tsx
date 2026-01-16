@@ -96,7 +96,7 @@ export default function CreateTicketScreen() {
       Alert.alert("Success", res?.successMessage || "Ticket created");
 
       if (newId) {
-        router.replace({ pathname: "/(tickets)/ticket-detail/[id]", params: { id: newId } });
+        router.replace({ pathname: "/(tickets)/add-media/[id]", params: { id: newId } });
       } else {
         router.back();
       }
