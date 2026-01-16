@@ -1,5 +1,6 @@
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { Branch, getBranches } from "@/src/api/branch.api";
+import { API_CONFIG } from "@/src/api/config";
 import { Department, getDepartments } from "@/src/api/department.api";
 import { getSystems, System } from "@/src/api/system.api";
 import {
@@ -17,6 +18,7 @@ import { DropDown, DropDownOption } from "@/src/components/inputs/DropDown";
 import { InputText } from "@/src/components/inputs/InputText";
 import { Label } from "@/src/components/labels/Label";
 import { getUserId } from "@/src/services/jwt.service";
+import { Audio } from "expo-av";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -41,6 +43,7 @@ export default function TicketDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [playingAudio, setPlayingAudio] = useState<Audio.Sound | null>(null);
 
   // Dropdown data
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -62,6 +65,16 @@ export default function TicketDetailScreen() {
   const background = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
 
+  // Helper function to build full media URL
+  const getMediaUrl = (mediaUrl: string): string => {
+    if (!mediaUrl) return "";
+    if (mediaUrl.startsWith("http")) return mediaUrl;
+    
+    // Remove /api/v1 from BASE_URL and append the media path
+    const baseUrl = API_CONFIG.BASE_URL.replace("/api/v1", "");
+    return `${baseUrl}${mediaUrl}`;
+  };
+
   useEffect(() => {
     loadTicketDetails();
   }, [ticketId]);
@@ -75,18 +88,15 @@ export default function TicketDetailScreen() {
       ]);
 
       setTicket(ticketData);
-      setMedia(mediaData);
+      console.log("Media data received:", mediaData);
+      setMedia(mediaData || []);
 
-      // Initialize edit form
       setTitle(ticketData.title);
       setDescription(ticketData.description);
-
-      // Set selected defaults
       setSelectedBranchId(ticketData.branchId);
       setSelectedDepartmentId(ticketData.departmentId);
       setSelectedSystemId(ticketData.systemId);
 
-      // Load dropdown lists
       await loadDropdownLists();
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || "Failed to load ticket details";
@@ -220,6 +230,34 @@ export default function TicketDetailScreen() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const playAudio = async (uri: string) => {
+    try {
+      if (playingAudio) {
+        await playingAudio.unloadAsync();
+      }
+      const { sound } = await Audio.Sound.createAsync({ uri });
+      setPlayingAudio(sound);
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync();
+          setPlayingAudio(null);
+        }
+      });
+    } catch (error) {
+      console.error("Error playing audio:", error);
+      Alert.alert("Error", "Failed to play audio");
+    }
+  };
+
+  const stopAudio = async () => {
+    if (playingAudio) {
+      await playingAudio.stopAsync();
+      await playingAudio.unloadAsync();
+      setPlayingAudio(null);
+    }
   };
 
   if (loading) {
@@ -441,29 +479,51 @@ export default function TicketDetailScreen() {
                   <View style={styles.mediaGrid}>
                     {media.map((item) => {
                       const mime = item.mediaType?.toLowerCase() || "";
-                      const uri = typeof item.mediaUrl === "string" ? item.mediaUrl : "";
+                      const uri = getMediaUrl(item.mediaUrl || "");
 
-                      const isImage = mime.startsWith("image") && !!uri;
+                      console.log("Media item:", { mime, uri }); // Debug log
+
+                      const isImage = mime.includes("image");
+                      const isAudio = mime.includes("audio");
 
                       return (
-                        <TouchableOpacity
-                          key={item.ticketMediaId}
-                          style={[styles.mediaItem, { backgroundColor: colors.surface }]}
-                        >
+                        <View key={item.ticketMediaId} style={styles.mediaItemWrapper}>
                           {isImage ? (
-                            <Image
-                              source={{ uri }}
-                              style={styles.mediaImage}
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <View style={styles.mediaPlaceholder}>
+                            <TouchableOpacity
+                              style={[styles.mediaItem, { backgroundColor: colors.card }]}
+                              onPress={() => Alert.alert("Image", uri)}
+                            >
+                              <Image
+                                source={{ uri }}
+                                style={styles.mediaImage}
+                                resizeMode="cover"
+                                onError={(error) => {
+                                  console.error("Image load error:", error.nativeEvent.error);
+                                  console.log("Failed URI:", uri);
+                                }}
+                              />
+                            </TouchableOpacity>
+                          ) : isAudio ? (
+                            <TouchableOpacity
+                              style={[styles.mediaItem, styles.audioItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                              onPress={() => playingAudio ? stopAudio() : playAudio(uri)}
+                            >
+                              <Text style={[styles.audioIcon, { color: colors.primary }]}>
+                                {playingAudio ? "⏸" : "▶"}
+                              </Text>
                               <Text style={[styles.mediaText, { color: textColor }]}>
-                                {mime || "unknown"}
+                                Audio
+                              </Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <View style={[styles.mediaItem, styles.fileItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                              <Text style={[styles.fileIcon, { color: textColor }]}>📄</Text>
+                              <Text style={[styles.mediaText, { color: textColor }]} numberOfLines={2}>
+                                {mime || "File"}
                               </Text>
                             </View>
                           )}
-                        </TouchableOpacity>
+                        </View>
                       );
                     })}
                   </View>
@@ -577,6 +637,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
   },
+  mediaItemWrapper: {
+    marginBottom: 10,
+  },
   mediaItem: {
     width: 100,
     height: 100,
@@ -587,6 +650,26 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  audioItem: {
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 8,
+  },
+  audioIcon: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  fileItem: {
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 8,
+  },
+  fileIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
   mediaPlaceholder: {
     width: "100%",
     height: "100%",
@@ -594,7 +677,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mediaText: {
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
   },
   actionsContainer: {
