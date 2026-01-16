@@ -30,7 +30,7 @@ export default function HomeUserScreen() {
   };
 
   const handleCreateTicket = () => {
-    // router.push("/(tickets)/create-ticket");
+    router.push("/(tickets)/create-ticket");
   };
 
   const handleViewTickets = () => {
