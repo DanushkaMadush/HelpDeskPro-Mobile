@@ -10,7 +10,7 @@ import { decodeToken } from "@/src/services/jwt.service";
 import { saveToken } from "@/src/utils/tokenStorage";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
@@ -32,7 +32,10 @@ export default function LoginScreen() {
       await saveToken(response.token);
 
       const decoded = decodeToken(response.token);
-      const role = decoded?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]?.toLowerCase();
+      const role =
+        decoded?.[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ]?.toLowerCase();
 
       if (role === "developer") {
         router.replace("/(tabs)/home-developer");
@@ -44,15 +47,15 @@ export default function LoginScreen() {
 
       if (error.message === "Network Error" || !error.response) {
         errorMessage = "Network error. Please check your internet connection.";
-      } 
-      else if (error.response) {
+      } else if (error.response) {
         const status = error.response.status;
         const message = error.response.data?.message;
 
         if (status === 401) {
           errorMessage = "Invalid email or password.";
         } else if (status === 400) {
-          errorMessage = message || "Invalid request. Please check your credentials.";
+          errorMessage =
+            message || "Invalid request. Please check your credentials.";
         } else if (status === 500) {
           errorMessage = "Server error. Please try again later.";
         } else if (message) {
@@ -71,7 +74,17 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: background }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: background }]}
+      edges={["top", "left", "right"]}
+    >
+      <View style={styles.logoContainer}>
+        <Image
+          source={require("@/assets/images/HelpDeskProLogo.jpg")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
       <View style={styles.form}>
         <Label text="Email" />
         <InputText
@@ -91,9 +104,9 @@ export default function LoginScreen() {
 
         <View style={styles.spacerLarge} />
 
-        <PrimaryButton 
-          title={loading ? "Logging in..." : "Login"} 
-          onPress={handleLogin} 
+        <PrimaryButton
+          title={loading ? "Logging in..." : "Login"}
+          onPress={handleLogin}
         />
 
         <View style={styles.spacerSmall} />
@@ -116,6 +129,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  logo: {
+    width: 200,
+    height: 200,
   },
   form: {
     gap: 4,
