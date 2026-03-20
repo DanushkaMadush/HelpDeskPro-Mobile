@@ -1,50 +1,140 @@
-# Welcome to your Expo app 👋
+# HelpDeskPro Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Mobile application for an **Issue Reporting & Tracking System** built for a **multi-branch company**.
 
-## Get started
+This repository contains the **mobile client** built with **Expo (React Native)** and **Expo Router** (file-based routing). The backend is a **.NET Core Web API** secured with **JWT authentication**.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Key Features
 
-2. Start the app
+### Ticket / Issue Management
+- Create and submit issues (tickets)
+- Track issue lifecycle via **status** updates
+- Categorize issues by **category**
+- Prioritize issues with **priority levels**
 
-   ```bash
-   npx expo start
-   ```
+### Multi-Branch Support
+- Designed for organizations with multiple branches
+- Issues can be reported and managed in a branch-aware workflow
 
-In the output, you'll find options to open the app in a
+### Attachments
+- Supports attaching **images**, **files**, and **recordings** to issues (implementation/storage depends on backend configuration)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Roles
+- **User** (reporter)
+- **IT Staff** (triage/resolve)
+- **Managers** (oversight/approval/escalation)
+- **Admin** (system management)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## Tech Stack
 
-When you're ready, run:
+### Mobile
+- **Expo SDK**: 54
+- **React Native**
+- **TypeScript**
+- **Expo Router**
+
+### Backend
+- **.NET Core Web API**
+- **JWT Authentication**
+
+---
+
+## Project Structure (high-level)
+
+- `app/` — Routes (Expo Router)
+  - `app/_layout.tsx` — Root stack layout
+  - `app/(tabs)/_layout.tsx` — Tab navigator layout
+  - `app/(tabs)/index.tsx` — Home tab
+  - `app/(tabs)/explore.tsx` — Explore tab
+  - `app/modal.tsx` — Modal screen
+- `components/` — Shared UI components
+- `hooks/` — Theme hooks
+- `constants/` — Theme constants
+- `assets/` — App assets
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js (LTS recommended)
+- npm (this repo includes `package-lock.json`)
+- Expo Go (optional) or Android Studio Emulator / iOS Simulator (macOS)
+
+### Install
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Run (development)
 
-## Learn more
+```bash
+npm run start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Then:
+- press `a` for Android
+- press `i` for iOS (macOS)
+- press `w` for web
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Or run directly:
 
-## Join the community
+```bash
+npm run android
+npm run ios
+npm run web
+```
 
-Join our community of developers creating universal apps.
+### Lint
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run lint
+```
+
+---
+
+## Configuration
+
+### API Base URL
+
+This app will need to know the backend API base URL. A common Expo approach is to use `EXPO_PUBLIC_*` environment variables.
+
+Create a `.env` file (if your implementation uses env vars) and add for example:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://localhost:5000
+```
+
+> Update the URL/port to match your .NET API.
+
+### Authentication
+
+Authentication is handled by the backend using **JWT**. The mobile app is expected to:
+- authenticate with username/email + password
+- receive a JWT
+- send `Authorization: Bearer <token>` for protected requests
+
+---
+
+## Backend Repository
+
+> Add your backend repository link here (e.g., `DanushkaMadush/HelpDeskPro-API`).
+
+---
+
+## Contributing
+
+1. Create a feature branch
+2. Make changes
+3. Open a pull request
+
+---
+
+## License
+
+See [`LICENSE`](./LICENSE).
