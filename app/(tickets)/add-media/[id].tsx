@@ -9,14 +9,14 @@ import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,7 +37,10 @@ export default function AddMediaScreen() {
   const pickImage = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      return Alert.alert("Permission required", "Media library permission is needed.");
+      return Alert.alert(
+        "Permission required",
+        "Media library permission is needed.",
+      );
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"], // Updated: use array instead of MediaTypeOptions
@@ -53,7 +56,10 @@ export default function AddMediaScreen() {
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) {
-        return Alert.alert("Permission required", "Microphone permission is needed.");
+        return Alert.alert(
+          "Permission required",
+          "Microphone permission is needed.",
+        );
       }
 
       // Set audio mode before creating recording
@@ -63,7 +69,7 @@ export default function AddMediaScreen() {
       });
 
       const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+        Audio.RecordingOptionsPresets.HIGH_QUALITY,
       );
 
       setRecording(newRecording);
@@ -80,7 +86,7 @@ export default function AddMediaScreen() {
       const uri = recording.getURI();
       setAudioUri(uri || null);
       setRecording(null);
-      
+
       // Reset audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -104,8 +110,14 @@ export default function AddMediaScreen() {
         name: uri.split("/").pop() || "upload",
         type: mediaType,
       };
-      await uploadTicketMedia(ticketId, file, userId);
-      Alert.alert("Uploaded", "Media uploaded successfully");
+
+      const res = await uploadTicketMedia(ticketId, file, userId);
+
+      if (res.errorMessage) {
+        Alert.alert("Error", res.errorMessage);
+      } else {
+        Alert.alert("Success", res.successMessage || "Upload successful");
+      }
     } catch (error: any) {
       const msg = error?.response?.data?.message || "Upload failed";
       Alert.alert("Error", msg);
@@ -116,30 +128,44 @@ export default function AddMediaScreen() {
   };
 
   const uploadImage = async () => {
-    if (!imageUri) return Alert.alert("Select image", "Please pick an image first.");
+    if (!imageUri)
+      return Alert.alert("Select image", "Please pick an image first.");
     await uploadOne(imageUri, "image/jpeg");
   };
 
   const uploadAudio = async () => {
-    if (!audioUri) return Alert.alert("Record audio", "Please record audio first.");
+    if (!audioUri)
+      return Alert.alert("Record audio", "Please record audio first.");
     await uploadOne(audioUri, "audio/m4a");
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: background }]} edges={["top", "left", "right"]}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.title, { color: textColor }]}>Add Media to Ticket #{ticketId}</Text>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: background }]}
+      edges={["top", "left", "right"]}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.title, { color: textColor }]}>
+          Add Media to Ticket #{ticketId}
+        </Text>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: textColor }]}>Image</Text>
-          {imageUri && <Image source={{ uri: imageUri }} style={styles.preview} />}
+          {imageUri && (
+            <Image source={{ uri: imageUri }} style={styles.preview} />
+          )}
           <PrimaryButton title="Pick Image" onPress={pickImage} />
           <View style={styles.spacerSmall} />
           <SecondaryButton title="Upload Image" onPress={uploadImage} />
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: textColor }]}>Voice Recording</Text>
+          <Text style={[styles.sectionTitle, { color: textColor }]}>
+            Voice Recording
+          </Text>
           <View style={styles.row}>
             <PrimaryButton
               title={recording ? "Stop Recording" : "Start Recording"}
@@ -148,14 +174,21 @@ export default function AddMediaScreen() {
             <View style={styles.rowSpacer} />
             <SecondaryButton title="Upload Audio" onPress={uploadAudio} />
           </View>
-          {audioUri && <Text style={[styles.info, { color: textColor }]}>Recorded file ready</Text>}
+          {audioUri && (
+            <Text style={[styles.info, { color: textColor }]}>
+              Recorded file ready
+            </Text>
+          )}
         </View>
 
         <View style={styles.spacerLarge} />
         {uploading ? (
           <ActivityIndicator size="large" color={colors.primary} />
         ) : (
-          <SecondaryButton title="Done" onPress={() => router.replace("/(tabs)/home-user")} />
+          <SecondaryButton
+            title="Done"
+            onPress={() => router.replace("/(tabs)/home-user")}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

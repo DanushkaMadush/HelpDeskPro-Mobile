@@ -63,17 +63,24 @@ export interface TicketMedia {
   uploadedAt: string;
 }
 
+export interface UploadMediaResponse {
+  successMessage?: string;
+  errorMessage?: string;
+}
+
 export interface UploadMediaRequest {
-  ticketId: number;
-  file: File | Blob;
+  file: any;
   uploadedBy: string;
 }
 
 export const createTicket = async (
-  payload: CreateTicketRequest
+  payload: CreateTicketRequest,
 ): Promise<CreateTicketResponse> => {
   try {
-    const response = await apiClient.post<CreateTicketResponse>("/tickets", payload);
+    const response = await apiClient.post<CreateTicketResponse>(
+      "/tickets",
+      payload,
+    );
     return response.data;
   } catch (error: any) {
     console.error("Create ticket error:", error);
@@ -92,7 +99,7 @@ export const getAllTickets = async (): Promise<Ticket[]> => {
 };
 
 export const updateTicket = async (
-  payload: UpdateTicketRequest
+  payload: UpdateTicketRequest,
 ): Promise<Ticket> => {
   try {
     const response = await apiClient.put<Ticket>("/tickets", payload);
@@ -115,7 +122,7 @@ export const getTicketById = async (ticketId: number): Promise<Ticket> => {
 
 export const deleteTicket = async (
   ticketId: number,
-  updatedBy: string
+  updatedBy: string,
 ): Promise<void> => {
   try {
     await apiClient.delete(`/tickets/${ticketId}`, {
@@ -128,11 +135,11 @@ export const deleteTicket = async (
 };
 
 export const getTicketsBySystemId = async (
-  systemId: number
+  systemId: number,
 ): Promise<Ticket[]> => {
   try {
     const response = await apiClient.get<Ticket[]>(
-      `/tickets/system/${systemId}`
+      `/tickets/system/${systemId}`,
     );
     return response.data;
   } catch (error: any) {
@@ -152,7 +159,7 @@ export const getTicketsByUserId = async (userId: string): Promise<Ticket[]> => {
 };
 
 export const updateTicketStatus = async (
-  payload: UpdateTicketStatusRequest
+  payload: UpdateTicketStatusRequest,
 ): Promise<Ticket> => {
   try {
     const response = await apiClient.patch<Ticket>("/tickets/status", payload);
@@ -166,22 +173,25 @@ export const updateTicketStatus = async (
 export const uploadTicketMedia = async (
   ticketId: number,
   file: any,
-  uploadedBy: string
-): Promise<TicketMedia> => {
+  uploadedBy: string,
+): Promise<UploadMediaResponse> => {
   try {
     const formData = new FormData();
-    formData.append("TicketId", ticketId.toString());
-    formData.append("File", file);
+    formData.append("File", {
+      uri: file.uri,
+      name: file.name || `upload_${Date.now()}`,
+      type: file.mimeType || file.type || "application/octet-stream",
+    } as any);
     formData.append("UploadedBy", uploadedBy);
 
-    const response = await apiClient.post<TicketMedia>(
+    const response = await apiClient.post<UploadMediaResponse>(
       `/tickets/${ticketId}/media`,
       formData,
       {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   } catch (error: any) {
@@ -191,11 +201,11 @@ export const uploadTicketMedia = async (
 };
 
 export const getTicketMedia = async (
-  ticketId: number
+  ticketId: number,
 ): Promise<TicketMedia[]> => {
   try {
     const response = await apiClient.get<TicketMedia[]>(
-      `/tickets/${ticketId}/media`
+      `/tickets/${ticketId}/media`,
     );
     return response.data;
   } catch (error: any) {
@@ -206,7 +216,7 @@ export const getTicketMedia = async (
 
 export const deleteTicketMedia = async (
   ticketId: number,
-  ticketMediaId: number
+  ticketMediaId: number,
 ): Promise<void> => {
   try {
     await apiClient.delete(`/tickets/${ticketId}/media/${ticketMediaId}`);
