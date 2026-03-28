@@ -63,6 +63,18 @@ export interface TicketMedia {
   uploadedAt: string;
 }
 
+export interface TicketMediaResponse {
+  ticketMediaId: number;
+  ticketId: number;
+  fileName: string;
+  originalFileName: string;
+  filePath: string;
+  mimeType: string;
+  fileSize: number;
+  durationSeconds?: number | null;
+  uploadedAt: string;
+}
+
 export interface UploadMediaResponse {
   successMessage?: string;
   errorMessage?: string;
@@ -202,9 +214,9 @@ export const uploadTicketMedia = async (
 
 export const getTicketMedia = async (
   ticketId: number,
-): Promise<TicketMedia[]> => {
+): Promise<TicketMediaResponse[]> => {
   try {
-    const response = await apiClient.get<TicketMedia[]>(
+    const response = await apiClient.get<TicketMediaResponse[]>(
       `/tickets/${ticketId}/media`,
     );
     return response.data;

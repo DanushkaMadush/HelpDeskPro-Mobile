@@ -1,6 +1,5 @@
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { Branch, getBranches } from "@/src/api/branch.api";
-import { API_CONFIG } from "@/src/api/config";
 import { Department, getDepartments } from "@/src/api/department.api";
 import { getSystems, System } from "@/src/api/system.api";
 import {
@@ -8,7 +7,7 @@ import {
   getTicketById,
   getTicketMedia,
   Ticket,
-  TicketMedia,
+  TicketMediaResponse,
   updateTicket,
 } from "@/src/api/ticket.api";
 import { Colors } from "@/src/colors/colors";
@@ -39,11 +38,12 @@ export default function TicketDetailScreen() {
   const ticketId = Number(id);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [media, setMedia] = useState<TicketMedia[]>([]);
+  const [media, setMedia] = useState<TicketMediaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [playingAudio, setPlayingAudio] = useState<Audio.Sound | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Dropdown data
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -53,7 +53,9 @@ export default function TicketDetailScreen() {
 
   // Selected values (numeric)
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+    number | null
+  >(null);
   const [selectedSystemId, setSelectedSystemId] = useState<number | null>(null);
 
   // Edit form state
@@ -64,16 +66,6 @@ export default function TicketDetailScreen() {
   const colors = colorScheme === "dark" ? Colors.dark : Colors.light;
   const background = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
-
-  // Helper function to build full media URL
-  const getMediaUrl = (mediaUrl: string): string => {
-    if (!mediaUrl) return "";
-    if (mediaUrl.startsWith("http")) return mediaUrl;
-    
-    // Remove /api/v1 from BASE_URL and append the media path
-    const baseUrl = API_CONFIG.BASE_URL.replace("/api/v1", "");
-    return `${baseUrl}${mediaUrl}`;
-  };
 
   useEffect(() => {
     loadTicketDetails();
@@ -99,7 +91,8 @@ export default function TicketDetailScreen() {
 
       await loadDropdownLists();
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || "Failed to load ticket details";
+      const errorMessage =
+        error?.response?.data?.message || "Failed to load ticket details";
       Alert.alert("Error", errorMessage);
       console.error("Error loading ticket details:", error);
       router.back();
@@ -120,7 +113,8 @@ export default function TicketDetailScreen() {
       setDepartments(deptRes || []);
       setSystems(systemRes || []);
     } catch (error: any) {
-      const msg = error?.response?.data?.message || "Failed to load dropdown data";
+      const msg =
+        error?.response?.data?.message || "Failed to load dropdown data";
       Alert.alert("Error", msg);
       console.error("Dropdown load error:", error);
     } finally {
@@ -164,7 +158,8 @@ export default function TicketDetailScreen() {
       setIsEditing(false);
       Alert.alert("Success", "Ticket updated successfully");
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || "Failed to update ticket";
+      const errorMessage =
+        error?.response?.data?.message || "Failed to update ticket";
       Alert.alert("Error", errorMessage);
       console.error("Error updating ticket:", error);
     } finally {
@@ -202,7 +197,7 @@ export default function TicketDetailScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -289,7 +284,24 @@ export default function TicketDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: background }]} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: background }]}
+      edges={["top", "left", "right"]}
+    >
+      {previewImage && (
+        <View style={styles.previewContainer}>
+          <TouchableOpacity
+            style={styles.previewOverlay}
+            onPress={() => setPreviewImage(null)}
+          >
+            <Image
+              source={{ uri: previewImage }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+      )}
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -330,7 +342,11 @@ export default function TicketDetailScreen() {
               <DropDown
                 label="Branch"
                 options={branches.map(
-                  (b) => ({ label: b.branchName, value: b.branchId } as DropDownOption)
+                  (b) =>
+                    ({
+                      label: b.branchName,
+                      value: b.branchId,
+                    }) as DropDownOption,
                 )}
                 value={selectedBranchId ?? undefined}
                 onSelect={(v) => setSelectedBranchId(v)}
@@ -345,7 +361,11 @@ export default function TicketDetailScreen() {
               <DropDown
                 label="Department"
                 options={departments.map(
-                  (d) => ({ label: d.departmentName, value: d.departmentId } as DropDownOption)
+                  (d) =>
+                    ({
+                      label: d.departmentName,
+                      value: d.departmentId,
+                    }) as DropDownOption,
                 )}
                 value={selectedDepartmentId ?? undefined}
                 onSelect={(v) => setSelectedDepartmentId(v)}
@@ -360,7 +380,11 @@ export default function TicketDetailScreen() {
               <DropDown
                 label="System"
                 options={systems.map(
-                  (s) => ({ label: s.systemName, value: s.systemId } as DropDownOption)
+                  (s) =>
+                    ({
+                      label: s.systemName,
+                      value: s.systemId,
+                    }) as DropDownOption,
                 )}
                 value={selectedSystemId ?? undefined}
                 onSelect={(v) => setSelectedSystemId(v)}
@@ -373,7 +397,10 @@ export default function TicketDetailScreen() {
 
               <View style={styles.spacerLarge} />
 
-              <PrimaryButton title={updating ? "Updating..." : "Save Changes"} onPress={handleUpdate} />
+              <PrimaryButton
+                title={updating ? "Updating..." : "Save Changes"}
+                onPress={handleUpdate}
+              />
               <View style={styles.spacerSmall} />
               <SecondaryButton
                 title="Cancel"
@@ -398,7 +425,12 @@ export default function TicketDetailScreen() {
 
               <View style={styles.infoSection}>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: textColor, opacity: 0.6 },
+                    ]}
+                  >
                     Description
                   </Text>
                   <Text style={[styles.infoValue, { color: textColor }]}>
@@ -407,7 +439,12 @@ export default function TicketDetailScreen() {
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: textColor, opacity: 0.6 },
+                    ]}
+                  >
                     System
                   </Text>
                   <Text style={[styles.infoValue, { color: textColor }]}>
@@ -416,16 +453,27 @@ export default function TicketDetailScreen() {
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: textColor, opacity: 0.6 },
+                    ]}
+                  >
                     Department
                   </Text>
                   <Text style={[styles.infoValue, { color: textColor }]}>
-                    {ticket.departmentName || `Department ID: ${ticket.departmentId}`}
+                    {ticket.departmentName ||
+                      `Department ID: ${ticket.departmentId}`}
                   </Text>
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: textColor, opacity: 0.6 },
+                    ]}
+                  >
                     Branch
                   </Text>
                   <Text style={[styles.infoValue, { color: textColor }]}>
@@ -434,7 +482,12 @@ export default function TicketDetailScreen() {
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: textColor, opacity: 0.6 },
+                    ]}
+                  >
                     Priority
                   </Text>
                   <View
@@ -450,7 +503,12 @@ export default function TicketDetailScreen() {
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                  <Text
+                    style={[
+                      styles.infoLabel,
+                      { color: textColor, opacity: 0.6 },
+                    ]}
+                  >
                     Created
                   </Text>
                   <Text style={[styles.infoValue, { color: textColor }]}>
@@ -460,7 +518,12 @@ export default function TicketDetailScreen() {
 
                 {ticket.updatedAt && (
                   <View style={styles.infoRow}>
-                    <Text style={[styles.infoLabel, { color: textColor, opacity: 0.6 }]}>
+                    <Text
+                      style={[
+                        styles.infoLabel,
+                        { color: textColor, opacity: 0.6 },
+                      ]}
+                    >
                       Last Updated
                     </Text>
                     <Text style={[styles.infoValue, { color: textColor }]}>
@@ -478,47 +541,86 @@ export default function TicketDetailScreen() {
                   </Text>
                   <View style={styles.mediaGrid}>
                     {media.map((item) => {
-                      const mime = item.mediaType?.toLowerCase() || "";
-                      const uri = getMediaUrl(item.mediaUrl || "");
-
-                      console.log("Media item:", { mime, uri }); // Debug log
+                      const mime = item.mimeType?.toLowerCase() || "";
+                      const uri = item.filePath;
 
                       const isImage = mime.includes("image");
                       const isAudio = mime.includes("audio");
 
                       return (
-                        <View key={item.ticketMediaId} style={styles.mediaItemWrapper}>
+                        <View
+                          key={item.ticketMediaId}
+                          style={styles.mediaItemWrapper}
+                        >
                           {isImage ? (
                             <TouchableOpacity
-                              style={[styles.mediaItem, { backgroundColor: colors.card }]}
-                              onPress={() => Alert.alert("Image", uri)}
+                              style={[
+                                styles.mediaItem,
+                                { backgroundColor: colors.card },
+                              ]}
+                              onPress={() => setPreviewImage(uri)}
                             >
                               <Image
                                 source={{ uri }}
                                 style={styles.mediaImage}
                                 resizeMode="cover"
-                                onError={(error) => {
-                                  console.error("Image load error:", error.nativeEvent.error);
-                                  console.log("Failed URI:", uri);
-                                }}
+                                // onError={(error) => {
+                                //   console.error(
+                                //     "Image load error:",
+                                //     error.nativeEvent.error,
+                                //   );
+                                //   console.log("Failed URI:", uri);
+                                // }}
                               />
                             </TouchableOpacity>
                           ) : isAudio ? (
                             <TouchableOpacity
-                              style={[styles.mediaItem, styles.audioItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-                              onPress={() => playingAudio ? stopAudio() : playAudio(uri)}
+                              style={[
+                                styles.mediaItem,
+                                styles.audioItem,
+                                {
+                                  backgroundColor: colors.card,
+                                  borderColor: colors.border,
+                                },
+                              ]}
+                              onPress={() =>
+                                playingAudio ? stopAudio() : playAudio(uri)
+                              }
                             >
-                              <Text style={[styles.audioIcon, { color: colors.primary }]}>
+                              <Text
+                                style={[
+                                  styles.audioIcon,
+                                  { color: colors.primary },
+                                ]}
+                              >
                                 {playingAudio ? "⏸" : "▶"}
                               </Text>
-                              <Text style={[styles.mediaText, { color: textColor }]}>
+                              <Text
+                                style={[styles.mediaText, { color: textColor }]}
+                              >
                                 Audio
                               </Text>
                             </TouchableOpacity>
                           ) : (
-                            <View style={[styles.mediaItem, styles.fileItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                              <Text style={[styles.fileIcon, { color: textColor }]}>📄</Text>
-                              <Text style={[styles.mediaText, { color: textColor }]} numberOfLines={2}>
+                            <View
+                              style={[
+                                styles.mediaItem,
+                                styles.fileItem,
+                                {
+                                  backgroundColor: colors.card,
+                                  borderColor: colors.border,
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[styles.fileIcon, { color: textColor }]}
+                              >
+                                📄
+                              </Text>
+                              <Text
+                                style={[styles.mediaText, { color: textColor }]}
+                                numberOfLines={2}
+                              >
                                 {mime || "File"}
                               </Text>
                             </View>
@@ -537,10 +639,7 @@ export default function TicketDetailScreen() {
                   onPress={() => setIsEditing(true)}
                 />
                 <View style={styles.spacerSmall} />
-                <SecondaryButton
-                  title="Delete Ticket"
-                  onPress={handleDelete}
-                />
+                <SecondaryButton title="Delete Ticket" onPress={handleDelete} />
               </View>
             </>
           )}
@@ -698,5 +797,26 @@ const styles = StyleSheet.create({
   pickerContainer: {
     borderWidth: 1,
     borderRadius: 8,
+  },
+  previewContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  previewOverlay: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
   },
 });
