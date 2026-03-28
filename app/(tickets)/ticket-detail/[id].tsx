@@ -71,6 +71,16 @@ export default function TicketDetailScreen() {
     loadTicketDetails();
   }, [ticketId]);
 
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    });
+  }, []);
+
   const loadTicketDetails = async () => {
     try {
       setLoading(true);
