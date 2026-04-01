@@ -1,0 +1,153 @@
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { login } from "@/src/api/auth.api";
+import { PrimaryButton } from "@/src/components/buttons/PrimaryButton";
+import { SecondaryButton } from "@/src/components/buttons/SecondaryButton";
+import { TertiaryButton } from "@/src/components/buttons/TertiaryButton";
+import { InputPassword } from "@/src/components/inputs/InputPassword";
+import { InputText } from "@/src/components/inputs/InputText";
+import { Label } from "@/src/components/labels/Label";
+import { decodeToken } from "@/src/services/jwt.service";
+import { saveToken } from "@/src/utils/tokenStorage";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, Image, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const background = useThemeColor({}, "background");
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await login({ email, password });
+      await saveToken(response.token);
+
+      const decoded = decodeToken(response.token);
+      const role =
+        decoded?.[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        ]?.toLowerCase();
+
+      if (role === "developer") {
+        router.replace("/(tabs)/home-developer");
+      } else {
+        router.replace("/(tabs)/home-user");
+      }
+    } catch (error: any) {
+      let errorMessage = "Login failed. Please try again.";
+
+      if (error.message === "Network Error" || !error.response) {
+        errorMessage = "Network error. Please check your internet connection.";
+      } else if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data?.message;
+
+        if (status === 401) {
+          errorMessage = "Invalid email or password.";
+        } else if (status === 400) {
+          errorMessage =
+            message || "Invalid request. Please check your credentials.";
+        } else if (status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else if (message) {
+          errorMessage = message;
+        }
+      }
+
+      Alert.alert("Login Failed", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = () => {
+    router.push("/(auth)/signup");
+  };
+
+  return (
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: background }]}
+      edges={["top", "left", "right"]}
+    >
+      <View style={styles.logoContainer}>
+        <Image
+          source={require("@/assets/images/HelpDeskProLogo.jpg")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+      <View style={styles.form}>
+        <Label text="Email" />
+        <InputText
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter your email"
+        />
+
+        <View style={styles.spacer} />
+
+        <Label text="Password" />
+        <InputPassword
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Enter your password"
+        />
+
+        <View style={styles.spacerLarge} />
+
+        <PrimaryButton
+          title={loading ? "Logging in..." : "Login"}
+          onPress={handleLogin}
+        />
+
+        <View style={styles.spacerSmall} />
+
+        <SecondaryButton title="Signup" onPress={handleSignUp} />
+
+        <View style={styles.spacerSmall} />
+
+        <TertiaryButton
+          title="Forgot password?"
+          onPress={() => console.log("Forgot password")}
+        />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  logo: {
+    width: 200,
+    height: 200,
+  },
+  form: {
+    gap: 4,
+  },
+  spacer: {
+    height: 12,
+  },
+  spacerLarge: {
+    height: 30,
+  },
+  spacerSmall: {
+    height: 10,
+  },
+});
