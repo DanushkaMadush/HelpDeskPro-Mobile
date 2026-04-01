@@ -566,8 +566,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   audioIcon: {
-    fontSize: 12,
-    marginBottom: 6,
+    fontSize: 32,
+    marginBottom: 4,
   },
   fileItem: {
     borderWidth: 1,
