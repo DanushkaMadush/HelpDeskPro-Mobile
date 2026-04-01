@@ -2,11 +2,13 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { getSystemsByUser, SystemByUser } from "@/src/api/system.api";
 import { Colors } from "@/src/colors/colors";
 import { getUserId, getUsername } from "@/src/services/jwt.service";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
@@ -87,7 +89,7 @@ export default function HomeDeveloperScreen() {
           {!loading &&
             !error &&
             systems.map((sys) => (
-              <View
+              <TouchableOpacity
                 key={sys.sysDevId}
                 style={[
                   styles.systemCard,
@@ -96,6 +98,8 @@ export default function HomeDeveloperScreen() {
                     borderColor: colors.border,
                   },
                 ]}
+                activeOpacity={0.7}
+                onPress={() => router.push(`/(systems)/${sys.systemId}` as any)}
               >
                 <Text style={[styles.systemName, { color: textColor }]}>
                   {sys.systemName}
@@ -103,7 +107,7 @@ export default function HomeDeveloperScreen() {
                 <Text style={{ color: textColor, opacity: 0.7 }}>
                   System ID: {sys.systemId}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
         </View>
       </ScrollView>
