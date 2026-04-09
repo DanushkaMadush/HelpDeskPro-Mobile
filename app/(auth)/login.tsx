@@ -32,10 +32,19 @@ export default function LoginScreen() {
       await saveToken(response.token);
 
       const decoded = decodeToken(response.token);
-      const role =
+
+      if (!decoded) {
+        Alert.alert("Error", "Invalid token received");
+        return;
+      }
+
+      const rawRole =
         decoded?.[
           "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        ]?.toLowerCase();
+        ];
+      const role = Array.isArray(rawRole)
+        ? rawRole[0]?.toLowerCase()
+        : rawRole?.toLowerCase();
 
       if (role === "developer") {
         router.replace("/(tabs)/home-developer");
