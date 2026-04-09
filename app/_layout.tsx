@@ -26,8 +26,8 @@ export default function RootLayout() {
             name="modal"
             options={{ presentation: "modal", title: "Modal" }}
           />
-          <Toast />
         </Stack>
+        <Toast topOffset={60} />
         <StatusBar style="auto" />
       </ThemeProvider>
     </SafeAreaProvider>
