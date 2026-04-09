@@ -112,7 +112,41 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:5000
 
 > Update the URL/port to match your .NET API.
 
-### Authentication
+### Realtime Notifications (SignalR)
+
+In-app realtime toast banners are powered by **SignalR** (`@microsoft/signalr`) combined with **react-native-toast-message**.
+
+#### How it works
+
+1. On app start the `useNotificationHub` hook checks whether a JWT is stored in `AsyncStorage`.
+2. If a token is present, it opens a SignalR connection to the backend notification hub.
+3. The same JWT is forwarded automatically via `accessTokenFactory` — no extra auth step is needed.
+4. When the backend fires the `ReceiveNotification` event the app shows a toast banner with the notification's **Title** and **Message**.
+5. The connection is closed automatically on logout (when the token is removed).
+
+#### Hub URL
+
+The hub URL is defined in `src/api/config.ts`:
+
+```typescript
+export const API_CONFIG = {
+  BASE_URL: 'http://192.168.8.104:5021/api/v1',
+  HUB_URL: 'http://192.168.8.104:5021/notificationHub',
+};
+```
+
+Change `HUB_URL` to match your backend host/port when deploying to a different environment.
+
+#### Backend requirements
+
+| Requirement | Detail |
+|---|---|
+| Hub route | `/notificationHub` mapped in `Program.cs` |
+| JWT auth | Query-string `access_token` supported for SignalR (already configured in the backend) |
+| Event name | `ReceiveNotification` |
+| Payload shape | `{ title: string; message: string; systemId?: number \| string }` |
+
+#### Authentication
 
 Authentication is handled by the backend using **JWT**. The mobile app is expected to:
 - authenticate with username/email + password
