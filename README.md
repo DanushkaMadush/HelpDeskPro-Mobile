@@ -110,8 +110,6 @@ Create a `.env` file (if your implementation uses env vars) and add for example:
 EXPO_PUBLIC_API_BASE_URL=http://localhost:5000
 ```
 
-> Update the URL/port to match your .NET API.
-
 ### Authentication
 
 Authentication is handled by the backend using **JWT**. The mobile app is expected to:
@@ -123,7 +121,7 @@ Authentication is handled by the backend using **JWT**. The mobile app is expect
 
 ## Backend Repository
 
-> Add your backend repository link here (e.g., `DanushkaMadush/HelpDeskPro-API`).
+> `https://github.com/DanushkaMadush/HelpDeskPro.git`
 
 ---
 
