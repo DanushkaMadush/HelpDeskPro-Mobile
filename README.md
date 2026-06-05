@@ -121,7 +121,7 @@ Authentication is handled by the backend using **JWT**. The mobile app is expect
 
 ## Backend Repository
 
-> `https://github.com/DanushkaMadush/HelpDeskPro.git`
+> [https://github.com/DanushkaMadush/HelpDeskPro.git](https://github.com/DanushkaMadush/HelpDeskPro.git)
 
 ---
 
